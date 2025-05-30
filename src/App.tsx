@@ -1,12 +1,12 @@
 import { BrowserRouter } from 'react-router-dom'
 import AppRouter from './router'
 import { Provider } from 'urql'
-import graphQLClient from './config/graphQL'
+import queryClient from './utils/query-client'
 
 function App() {
   return (
     <BrowserRouter>
-      <Provider value={graphQLClient}>
+      <Provider value={queryClient}>
         <AppRouter />
       </Provider>
     </BrowserRouter>

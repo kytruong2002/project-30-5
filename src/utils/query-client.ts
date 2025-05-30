@@ -1,6 +1,6 @@
 import { cacheExchange, createClient, fetchExchange } from 'urql'
 
-const graphQLClient = createClient({
+const queryClient = createClient({
   url: import.meta.env.VITE_API_URL_GRAPHQL,
   fetchOptions: {
     headers: {
@@ -11,4 +11,4 @@ const graphQLClient = createClient({
   exchanges: [cacheExchange, fetchExchange]
 })
 
-export default graphQLClient
+export default queryClient
