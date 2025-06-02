@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from 'urql'
-import { Table, TableBody, TableCell, TableFooter, TableHeader, TableRow } from '@/components/ui/table'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import TokenInfo from '@/components/tokenInfo'
 import TableHeadCustom from '@/pages/home/tableHeadCustom'
@@ -12,10 +12,10 @@ import { shortenAddress, formatCurrency } from '@/utils/helpers'
 import type { FilterTokens } from '@/types/token'
 
 import IconX from '@/assets/icons/X.png'
-import IconXWhite from '@/assets/icons/X-white.png'
 import IconDiscount from '@/assets/icons/discount.png'
 import IconTop from '@/assets/icons/top.png'
 import { Copy } from 'lucide-react'
+import { CopyText } from '@/components/copyText'
 
 interface TokenTable {
   rank: number
@@ -51,31 +51,9 @@ const Home = () => {
     }
   })
 
-  const tableBodyRef = useRef<HTMLTableSectionElement | null>(null)
-  const [footerRow, setFooterRow] = useState<TokenTable | null>(null)
   const [dataTable, setDataTable] = useState<TokenTable[]>([])
 
   const { data } = result
-
-  const handleScroll = () => {
-    const tbody = tableBodyRef.current
-    if (!tbody) return
-
-    const rowHeight = 70
-    const scrollTop = tbody.scrollTop
-
-    const visibleStartIndex = Math.floor(scrollTop / rowHeight)
-    const visibleEndIndex = Math.min(visibleStartIndex + 9, dataTable.length - 1)
-
-    const visibleRows = dataTable.slice(visibleStartIndex, visibleEndIndex + 1)
-
-    setFooterRow(visibleRows[visibleRows.length - 1] || null)
-  }
-
-  useEffect(() => {
-    handleScroll()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataTable])
 
   useEffect(() => {
     if (data?.filterTokens?.results) {
@@ -84,7 +62,7 @@ const Home = () => {
         name: item.token.name,
         symbol: item.token.symbol,
         avatar: item.token.imageThumbUrl,
-        creator: item.token.creatorAddress ? shortenAddress(item.token.creatorAddress) : 'N/A',
+        creator: item.token.creatorAddress,
         price: formatCurrency(+item.priceUSD),
         marketCap: formatCurrency(+item.marketCap),
         volume24h: formatCurrency(+item.volume24),
@@ -155,7 +133,7 @@ const Home = () => {
           </div>
         </div>
 
-        <div ref={tableBodyRef} onScroll={handleScroll} className='relative mt-4 max-h-[754px] overflow-y-auto'>
+        <div className='relative mt-4 max-h-[754px] overflow-y-auto'>
           <Table className='text-center text-sm'>
             <TableHeader className='sticky top-0 z-10 bg-white'>
               <TableRow className='h-[54px] bg-[rgba(0,158,153,0.1)]'>
@@ -169,58 +147,30 @@ const Home = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {dataTable.map((token) => {
-                if (token.rank === footerRow?.rank) return null
-                return (
-                  <TableRow key={token.key} className='h-[70px]'>
-                    <TableCell className='p-4 font-medium text-[#787575]'>#{token.rank}</TableCell>
-                    <TableCell className='p-4'>
-                      <TokenInfo
-                        name={token.name}
-                        symbol={token.symbol}
-                        avatar={token.avatar}
-                        address={token.address}
-                      />
-                    </TableCell>
-                    <TableCell className='p-4'>{token.creator}</TableCell>
-                    <TableCell className={`p-4 ${+token.change24 < 0 ? 'text-[#FF6467]' : 'text-[#34C759]'}`}>
-                      {token.change24}%
-                    </TableCell>
-                    <TableCell className='p-4'>{token.marketCap}</TableCell>
-                    <TableCell className='p-4'>{token.volume24h}</TableCell>
-                    <TableCell className='p-4 text-right'>{token.price}</TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-            {footerRow && (
-              <TableFooter className='sticky bottom-0 z-10 bg-primary text-white'>
-                <TableRow className='h-[70px]'>
-                  <TableCell>#{footerRow.rank}</TableCell>
-                  <TableCell>
-                    <TokenInfo
-                      name={footerRow.name}
-                      symbol={footerRow.symbol}
-                      avatar={footerRow.avatar}
-                      address={footerRow.address}
-                      icons={[
-                        {
-                          url: '/',
-                          icon: <img src={IconXWhite} alt='Icon X' className='w-3 h-3' />
-                        }
-                      ]}
-                    />
+              {dataTable.map((token) => (
+                <TableRow key={token.key} className='h-[70px]'>
+                  <TableCell className='p-4 font-medium text-[#787575]'>#{token.rank}</TableCell>
+                  <TableCell className='p-4'>
+                    <TokenInfo name={token.name} symbol={token.symbol} avatar={token.avatar} address={token.address} />
                   </TableCell>
-                  <TableCell>{footerRow.creator}</TableCell>
-                  <TableCell className={+footerRow.change24 < 0 ? 'text-red-300' : 'text-green-300'}>
-                    {footerRow.change24}%
+                  <TableCell className='p-4'>
+                    {token.creator ? (
+                      <span className='flex items-center justify-center gap-1'>
+                        {shortenAddress(token.creator)} <CopyText text={token.creator} />
+                      </span>
+                    ) : (
+                      'N/A'
+                    )}
                   </TableCell>
-                  <TableCell>{footerRow.marketCap}</TableCell>
-                  <TableCell>{footerRow.volume24h}</TableCell>
-                  <TableCell>{footerRow.price}</TableCell>
+                  <TableCell className={`p-4 ${+token.change24 < 0 ? 'text-[#FF6467]' : 'text-[#34C759]'}`}>
+                    {token.change24}%
+                  </TableCell>
+                  <TableCell className='p-4'>{token.marketCap}</TableCell>
+                  <TableCell className='p-4'>{token.volume24h}</TableCell>
+                  <TableCell className='p-4 text-right'>{token.price}</TableCell>
                 </TableRow>
-              </TableFooter>
-            )}
+              ))}
+            </TableBody>
           </Table>
         </div>
       </section>
