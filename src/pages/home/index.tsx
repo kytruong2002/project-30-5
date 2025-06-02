@@ -136,7 +136,7 @@ const Home = () => {
         <div className='relative mt-4 max-h-[754px] overflow-y-auto'>
           <Table className='text-center text-sm'>
             <TableHeader className='sticky top-0 z-10 bg-white'>
-              <TableRow className='h-[54px] bg-[rgba(0,158,153,0.1)]'>
+              <TableRow className='h-[54px] bg-[rgba(0,158,153,0.1)] hover:bg-[rgba(0,158,153,0.1)]'>
                 <TableHeadCustom text='Rank' />
                 <TableHeadCustom text='Token' position='left' />
                 <TableHeadCustom text='Creator' />
