@@ -143,7 +143,7 @@ const Home = () => {
                 <TableHeadCustom text='24h Chg' />
                 <TableHeadCustom text='Market Cap' />
                 <TableHeadCustom text='Volume (24h)' />
-                <TableHeadCustom text='Token Price' position='right' />
+                <TableHeadCustom text='Token Price' />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -167,7 +167,7 @@ const Home = () => {
                   </TableCell>
                   <TableCell className='p-4'>{token.marketCap}</TableCell>
                   <TableCell className='p-4'>{token.volume24h}</TableCell>
-                  <TableCell className='p-4 text-right'>{token.price}</TableCell>
+                  <TableCell className='p-4'>{token.price}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
