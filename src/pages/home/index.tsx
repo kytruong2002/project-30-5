@@ -1,52 +1,126 @@
-import { Button } from '@/components/ui/button'
-import IconX from '@/assets/icons/X.png'
-import IconXWhite from '@/assets/icons/X-white.png'
-import IconCoppy from '@/assets/icons/coppy.png'
-import IconCoppySolid from '@/assets/icons/coppy-solid.png'
-import IconDiscount from '@/assets/icons/discount.png'
-import IconTop from '@/assets/icons/top.png'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { useQuery } from 'urql'
 import { Table, TableBody, TableCell, TableFooter, TableHeader, TableRow } from '@/components/ui/table'
-import avatar from '@/assets/avatar/DUPE.png'
+import { Button } from '@/components/ui/button'
 import TokenInfo from '@/components/tokenInfo'
 import TableHeadCustom from '@/pages/home/tableHeadCustom'
-import { Link, useSearchParams } from 'react-router-dom'
-import { PATH } from '@/utils/const'
 import usePageTitle from '@/hooks/usePageTitle'
+import { TOP_TRENDING_QUERY } from '@/queries/token'
+import { PATH } from '@/utils/const'
+import { shortenAddress, formatCurrency } from '@/utils/helpers'
+import type { FilterTokens } from '@/types/token'
+
+import IconX from '@/assets/icons/X.png'
+import IconXWhite from '@/assets/icons/X-white.png'
+import IconDiscount from '@/assets/icons/discount.png'
+import IconTop from '@/assets/icons/top.png'
+import { Copy } from 'lucide-react'
+
+interface TokenTable {
+  rank: number
+  name: string
+  symbol: string
+  avatar: string
+  creator: string
+  price: string
+  marketCap: string
+  volume24h: string
+  key: string
+  change24: string
+  address: string
+}
 
 const Home = () => {
   usePageTitle()
+
   const [searchParams] = useSearchParams()
-  const tab = (searchParams.get('tab') ?? 'BNB').trim().toUpperCase()
+  const tab = (searchParams.get('tab') ?? 'bsc').trim().toLowerCase()
+
+  const [result] = useQuery({
+    query: TOP_TRENDING_QUERY,
+    variables: {
+      networkId: [tab],
+      rankings: [
+        {
+          attribute: 'trendingScore24',
+          direction: 'DESC'
+        }
+      ],
+      limit: 50
+    }
+  })
+
+  const tableBodyRef = useRef<HTMLTableSectionElement | null>(null)
+  const [footerRow, setFooterRow] = useState<TokenTable | null>(null)
+  const [dataTable, setDataTable] = useState<TokenTable[]>([])
+
+  const { data } = result
+
+  const handleScroll = () => {
+    const tbody = tableBodyRef.current
+    if (!tbody) return
+
+    const rowHeight = 70
+    const scrollTop = tbody.scrollTop
+
+    const visibleStartIndex = Math.floor(scrollTop / rowHeight)
+    const visibleEndIndex = Math.min(visibleStartIndex + 9, dataTable.length - 1)
+
+    const visibleRows = dataTable.slice(visibleStartIndex, visibleEndIndex + 1)
+
+    setFooterRow(visibleRows[visibleRows.length - 1] || null)
+  }
+
+  useEffect(() => {
+    handleScroll()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataTable])
+
+  useEffect(() => {
+    if (data?.filterTokens?.results) {
+      const tokens: TokenTable[] = data.filterTokens.results.map((item: FilterTokens, index: number) => ({
+        rank: index + 1,
+        name: item.token.name,
+        symbol: item.token.symbol,
+        avatar: item.token.imageThumbUrl,
+        creator: item.token.creatorAddress ? shortenAddress(item.token.creatorAddress) : 'N/A',
+        price: formatCurrency(+item.priceUSD),
+        marketCap: formatCurrency(+item.marketCap),
+        volume24h: formatCurrency(+item.volume24),
+        key: `${item.token.address}:${item.token.networkId}`,
+        change24: parseFloat(item.change24).toFixed(6),
+        address: item.token.address
+      }))
+
+      setDataTable(tokens)
+    }
+  }, [data])
+
   return (
     <>
-      <section className='flex justify-center items-center flex-col pt-10 pb-6 '>
-        <h1 className='font-medium text-5xl'>ACW3 Leaderboard</h1>
-        <p className='mb-4 mt-2 text-xl'>
-          Discover the top cults on <span className='text-primary font-bold'>ACW3</span>
+      <section className='flex flex-col items-center justify-center pt-10 pb-6'>
+        <h1 className='text-5xl font-medium'>ACW3 Leaderboard</h1>
+        <p className='mt-2 mb-4 text-xl'>
+          Discover the top cults on <span className='font-bold text-primary'>ACW3</span>
         </p>
         <Button
           variant='outline'
-          className='flex items-center justify-center gap-1 text-primary border-primary hover:text-primary hover:bg-white'
+          className='flex items-center justify-center gap-1 border-primary text-primary hover:bg-white hover:text-primary'
         >
-          <span>
-            <img src={IconX} alt='Icon representing X' />
-          </span>
+          <img src={IconX} alt='Icon X' />
           Made by ACW3
         </Button>
-        <Button className='flex items-center justify-center gap-2 my-3 rounded-2xl bg-primary text-white hover:bg-primary font-bold px-6 py-2'>
-          This dashboard has been coined <span>ACW3</span>{' '}
-          <span>
-            <img src={IconCoppy} alt='Icon representing Coppy' />
-          </span>
+        <Button className='my-3 flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-2 font-bold text-white hover:bg-primary'>
+          This dashboard has been coined <span>ACW3</span>
+          <Copy />
         </Button>
-        <p className='flex justify-between items-center gap-5 text-xs'>
+        <p className='flex items-center justify-between gap-5 text-xs'>
           <span>
             <span className='font-bold'>MC: </span>$162.77K
           </span>
           <span className='flex items-center gap-1 text-[#FF6467]'>
-            <span>
-              <img src={IconDiscount} alt='Icon representing discount' />
-            </span>
+            <img src={IconDiscount} alt='Discount icon' />
             <span className='font-bold'>1h: </span>-3.34%
           </span>
           <span>
@@ -54,74 +128,101 @@ const Home = () => {
           </span>
         </p>
       </section>
-      <section className='border border-primary rounded-2xl p-6 mt-4'>
-        <div className='flex justify-between items-center'>
-          <p className='flex items-center gap-2 font-medium text-lg'>
-            <span>
-              <img src={IconTop} alt='Icon representing top' />
-            </span>{' '}
+
+      <section className='mt-4 rounded-2xl border border-primary p-6'>
+        <div className='flex items-center justify-between'>
+          <p className='flex items-center gap-2 text-lg font-medium'>
+            <img src={IconTop} alt='Top icon' />
             Top 50 Creators
           </p>
-          <div>
-            <Link to={PATH.HOME + '?tab=BNB'}>
+          <div className='flex gap-2'>
+            <Link to={PATH.HOME + '?tab=bsc'}>
               <Button
-                variant={tab === 'BNB' ? 'default' : 'ghost'}
-                className='px-2 py-1 rounded-lg text-sm font-medium'
+                variant={tab === 'bsc' ? 'default' : 'ghost'}
+                className='rounded-lg px-2 py-1 text-sm font-medium'
               >
                 BNB Chain
               </Button>
             </Link>
-            <Link to={PATH.HOME + '?tab=BASE'}>
+            <Link to={PATH.HOME + '?tab=base'}>
               <Button
-                variant={tab === 'BASE' ? 'default' : 'ghost'}
-                className='px-3 py-1 rounded-lg text-sm font-medium'
+                variant={tab === 'base' ? 'default' : 'ghost'}
+                className='rounded-lg px-3 py-1 text-sm font-medium'
               >
                 Base
               </Button>
             </Link>
           </div>
         </div>
-        <Table className='text-sm mt-4 text-center'>
-          <TableHeader className='bg-[rgba(0,158,153,0.1)]'>
-            <TableRow>
-              <TableHeadCustom text='Rank' />
-              <TableHeadCustom text='Token' position='left' />
-              <TableHeadCustom text='Creator' />
-              <TableHeadCustom text='24h Chg' />
-              <TableHeadCustom text='Market Cap' />
-              <TableHeadCustom text='Volume (24h)' />
-              <TableHeadCustom text='Token Price' position='right' />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array.from({ length: 9 }, (_, i) => (
-              <TableRow key={i}>
-                <TableCell className='font-medium text-[#787575] p-4'>#{i + 1}</TableCell>
-                <TableCell className='p-4'>
-                  <TokenInfo name='promptbidder' sysmbol='DUPE' avatar={avatar} iconCoppys={[IconCoppySolid]} />
-                </TableCell>
-                <TableCell className='p-4'>N/A</TableCell>
-                <TableCell className='text-[#34C759] p-4'>+24%</TableCell>
-                <TableCell className='p-4'>$32.88M</TableCell>
-                <TableCell className='p-4'>$4.31M</TableCell>
-                <TableCell className='text-right p-4'>$0.032878</TableCell>
+
+        <div ref={tableBodyRef} onScroll={handleScroll} className='relative mt-4 max-h-[754px] overflow-y-auto'>
+          <Table className='text-center text-sm'>
+            <TableHeader className='sticky top-0 z-10 bg-white'>
+              <TableRow className='h-[54px] bg-[rgba(0,158,153,0.1)]'>
+                <TableHeadCustom text='Rank' />
+                <TableHeadCustom text='Token' position='left' />
+                <TableHeadCustom text='Creator' />
+                <TableHeadCustom text='24h Chg' />
+                <TableHeadCustom text='Market Cap' />
+                <TableHeadCustom text='Volume (24h)' />
+                <TableHeadCustom text='Token Price' position='right' />
               </TableRow>
-            ))}
-          </TableBody>
-          <TableFooter className='bg-primary text-white'>
-            <TableRow>
-              <TableCell>#10</TableCell>
-              <TableCell>
-                <TokenInfo name='promptbidder' sysmbol='DUPE' avatar={avatar} iconCoppys={[IconCoppy, IconXWhite]} />
-              </TableCell>
-              <TableCell>N/A</TableCell>
-              <TableCell className='text-[#34C759]'>+24%</TableCell>
-              <TableCell>$32.88M</TableCell>
-              <TableCell>$4.31M</TableCell>
-              <TableCell>$0.032878</TableCell>
-            </TableRow>
-          </TableFooter>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {dataTable.map((token) => {
+                if (token.rank === footerRow?.rank) return null
+                return (
+                  <TableRow key={token.key} className='h-[70px]'>
+                    <TableCell className='p-4 font-medium text-[#787575]'>#{token.rank}</TableCell>
+                    <TableCell className='p-4'>
+                      <TokenInfo
+                        name={token.name}
+                        symbol={token.symbol}
+                        avatar={token.avatar}
+                        address={token.address}
+                      />
+                    </TableCell>
+                    <TableCell className='p-4'>{token.creator}</TableCell>
+                    <TableCell className={`p-4 ${+token.change24 < 0 ? 'text-[#FF6467]' : 'text-[#34C759]'}`}>
+                      {token.change24}%
+                    </TableCell>
+                    <TableCell className='p-4'>{token.marketCap}</TableCell>
+                    <TableCell className='p-4'>{token.volume24h}</TableCell>
+                    <TableCell className='p-4 text-right'>{token.price}</TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+            {footerRow && (
+              <TableFooter className='sticky bottom-0 z-10 bg-primary text-white'>
+                <TableRow className='h-[70px]'>
+                  <TableCell>#{footerRow.rank}</TableCell>
+                  <TableCell>
+                    <TokenInfo
+                      name={footerRow.name}
+                      symbol={footerRow.symbol}
+                      avatar={footerRow.avatar}
+                      address={footerRow.address}
+                      icons={[
+                        {
+                          url: '/',
+                          icon: <img src={IconXWhite} alt='Icon X' className='w-3 h-3' />
+                        }
+                      ]}
+                    />
+                  </TableCell>
+                  <TableCell>{footerRow.creator}</TableCell>
+                  <TableCell className={+footerRow.change24 < 0 ? 'text-red-300' : 'text-green-300'}>
+                    {footerRow.change24}%
+                  </TableCell>
+                  <TableCell>{footerRow.marketCap}</TableCell>
+                  <TableCell>{footerRow.volume24h}</TableCell>
+                  <TableCell>{footerRow.price}</TableCell>
+                </TableRow>
+              </TableFooter>
+            )}
+          </Table>
+        </div>
       </section>
     </>
   )
