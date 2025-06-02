@@ -11,10 +11,12 @@ import TokenInfo from '@/components/tokenInfo'
 import TableHeadCustom from '@/pages/home/tableHeadCustom'
 import { Link, useSearchParams } from 'react-router-dom'
 import { PATH } from '@/utils/const'
+import usePageTitle from '@/hooks/usePageTitle'
 
 const Home = () => {
-  const [searchParams] = useSearchParams();
-  const tab = (searchParams.get('tab') ?? 'BNB').trim().toUpperCase();
+  usePageTitle()
+  const [searchParams] = useSearchParams()
+  const tab = (searchParams.get('tab') ?? 'BNB').trim().toUpperCase()
   return (
     <>
       <section className='flex justify-center items-center flex-col pt-10 pb-6 '>
@@ -62,12 +64,18 @@ const Home = () => {
           </p>
           <div>
             <Link to={PATH.HOME + '?tab=BNB'}>
-              <Button variant={tab === 'BNB' ? 'default' : 'ghost'} className='px-2 py-1 rounded-lg text-sm font-medium'>
+              <Button
+                variant={tab === 'BNB' ? 'default' : 'ghost'}
+                className='px-2 py-1 rounded-lg text-sm font-medium'
+              >
                 BNB Chain
               </Button>
             </Link>
             <Link to={PATH.HOME + '?tab=BASE'}>
-              <Button variant={tab === 'BASE' ? 'default' : 'ghost'} className='px-3 py-1 rounded-lg text-sm font-medium'>
+              <Button
+                variant={tab === 'BASE' ? 'default' : 'ghost'}
+                className='px-3 py-1 rounded-lg text-sm font-medium'
+              >
                 Base
               </Button>
             </Link>
