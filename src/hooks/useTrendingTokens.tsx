@@ -1,6 +1,4 @@
-import { useGlobalDataContext } from '@/contexts/globalData'
 import { TOP_TRENDING_QUERY } from '@/queries/token'
-import { useEffect } from 'react'
 import { useQuery } from 'urql'
 
 export function useTrendingTokens(tab: string) {
@@ -17,16 +15,10 @@ export function useTrendingTokens(tab: string) {
       limit: 50
     }
   })
-
-  const { setIsLoading } = useGlobalDataContext()
   const { data, fetching } = result
 
-  useEffect(() => {
-    setIsLoading(fetching)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetching])
-
   return {
-    listTrendingTokens: data?.filterTokens?.results || []
+    listTrendingTokens: data?.filterTokens?.results || [],
+    isLoading: fetching
   }
 }

@@ -14,6 +14,7 @@ import IconTop from '@/assets/icons/top.png'
 import { Copy } from 'lucide-react'
 import { CopyText } from '@/components/copyText'
 import { useTrendingTokens } from '@/hooks/useTrendingTokens'
+import Loading from '@/components/loading'
 
 interface TokenTable {
   rank: number
@@ -34,7 +35,7 @@ const Home = () => {
 
   const [searchParams] = useSearchParams()
   const tab = (searchParams.get('tab') ?? 'bsc').trim().toLowerCase()
-  const { listTrendingTokens } = useTrendingTokens(tab)
+  const { listTrendingTokens, isLoading } = useTrendingTokens(tab)
 
   const dataTable: TokenTable[] = useMemo(() => {
     return listTrendingTokens.map((item: FilterTokens, index: number) => ({
@@ -51,6 +52,8 @@ const Home = () => {
       address: item.token.address
     }))
   }, [listTrendingTokens])
+
+  if (isLoading) return <Loading />
 
   return (
     <>
