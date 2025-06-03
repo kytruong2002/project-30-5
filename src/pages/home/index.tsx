@@ -53,10 +53,9 @@ const Home = () => {
     }))
   }, [listTrendingTokens])
 
-  if (isLoading) return <Loading />
-
   return (
     <>
+      {isLoading && <Loading />}
       <section className='flex flex-col items-center justify-center pt-10 pb-6'>
         <h1 className='text-5xl font-medium'>ACW3 Leaderboard</h1>
         <p className='mt-2 mb-4 text-xl'>
