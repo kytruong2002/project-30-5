@@ -5,7 +5,7 @@ const Default = () => {
   return (
     <>
       <Header />
-      <main className='px-20 py-5'>
+      <main className='px-4 md:px-20 py-5'>
         <Outlet />
       </main>
     </>
