@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useQuery } from 'urql'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import TokenInfo from '@/components/tokenInfo'
 import TableHeadCustom from '@/pages/home/tableHeadCustom'
 import usePageTitle from '@/hooks/usePageTitle'
-import { TOP_TRENDING_QUERY } from '@/queries/token'
 import { PATH } from '@/utils/const'
 import { shortenAddress, formatCurrency } from '@/utils/helpers'
 import type { FilterTokens } from '@/types/token'
@@ -15,7 +13,7 @@ import IconDiscount from '@/assets/icons/discount.png'
 import IconTop from '@/assets/icons/top.png'
 import { Copy } from 'lucide-react'
 import { CopyText } from '@/components/copyText'
-import { useGlobalDataContext } from '@/contexts/globalData'
+import { useTrendingTokens } from '@/hooks/useTrendingTokens'
 
 interface TokenTable {
   rank: number
@@ -36,33 +34,12 @@ const Home = () => {
 
   const [searchParams] = useSearchParams()
   const tab = (searchParams.get('tab') ?? 'bsc').trim().toLowerCase()
-
-  const [result] = useQuery({
-    query: TOP_TRENDING_QUERY,
-    variables: {
-      networkId: [tab],
-      rankings: [
-        {
-          attribute: 'trendingScore24',
-          direction: 'DESC'
-        }
-      ],
-      limit: 50
-    }
-  })
-
+  const { listTrendingTokens } = useTrendingTokens(tab)
   const [dataTable, setDataTable] = useState<TokenTable[]>([])
-  const { setIsLoading } = useGlobalDataContext()
-  const { data, fetching } = result
 
   useEffect(() => {
-    setIsLoading(fetching)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetching])
-
-  useEffect(() => {
-    if (data?.filterTokens?.results) {
-      const tokens: TokenTable[] = data.filterTokens.results.map((item: FilterTokens, index: number) => ({
+    if (listTrendingTokens) {
+      const tokens: TokenTable[] = listTrendingTokens.map((item: FilterTokens, index: number) => ({
         rank: index + 1,
         name: item.token.name,
         symbol: item.token.symbol,
@@ -78,7 +55,7 @@ const Home = () => {
 
       setDataTable(tokens)
     }
-  }, [data])
+  }, [listTrendingTokens])
 
   return (
     <>
