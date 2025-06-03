@@ -10,12 +10,12 @@ import { TOP_TRENDING_QUERY } from '@/queries/token'
 import { PATH } from '@/utils/const'
 import { shortenAddress, formatCurrency } from '@/utils/helpers'
 import type { FilterTokens } from '@/types/token'
-
 import IconX from '@/assets/icons/X.png'
 import IconDiscount from '@/assets/icons/discount.png'
 import IconTop from '@/assets/icons/top.png'
 import { Copy } from 'lucide-react'
 import { CopyText } from '@/components/copyText'
+import { useGlobalDataContext } from '@/contexts/globalData'
 
 interface TokenTable {
   rank: number
@@ -52,8 +52,13 @@ const Home = () => {
   })
 
   const [dataTable, setDataTable] = useState<TokenTable[]>([])
+  const { setIsLoading } = useGlobalDataContext()
+  const { data, fetching } = result
 
-  const { data } = result
+  useEffect(() => {
+    setIsLoading(fetching)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetching])
 
   useEffect(() => {
     if (data?.filterTokens?.results) {
