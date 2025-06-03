@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -35,26 +35,21 @@ const Home = () => {
   const [searchParams] = useSearchParams()
   const tab = (searchParams.get('tab') ?? 'bsc').trim().toLowerCase()
   const { listTrendingTokens } = useTrendingTokens(tab)
-  const [dataTable, setDataTable] = useState<TokenTable[]>([])
 
-  useEffect(() => {
-    if (listTrendingTokens) {
-      const tokens: TokenTable[] = listTrendingTokens.map((item: FilterTokens, index: number) => ({
-        rank: index + 1,
-        name: item.token.name,
-        symbol: item.token.symbol,
-        avatar: item.token.imageThumbUrl,
-        creator: item.token.creatorAddress,
-        price: formatCurrency(+item.priceUSD),
-        marketCap: formatCurrency(+item.marketCap),
-        volume24h: formatCurrency(+item.volume24),
-        key: `${item.token.address}:${item.token.networkId}`,
-        change24: parseFloat(item.change24).toFixed(6),
-        address: item.token.address
-      }))
-
-      setDataTable(tokens)
-    }
+  const dataTable: TokenTable[] = useMemo(() => {
+    return listTrendingTokens.map((item: FilterTokens, index: number) => ({
+      rank: index + 1,
+      name: item.token.name,
+      symbol: item.token.symbol,
+      avatar: item.token.imageThumbUrl,
+      creator: item.token.creatorAddress,
+      price: formatCurrency(+item.priceUSD),
+      marketCap: formatCurrency(+item.marketCap),
+      volume24h: formatCurrency(+item.volume24),
+      key: `${item.token.address}:${item.token.networkId}`,
+      change24: parseFloat(item.change24).toFixed(6),
+      address: item.token.address
+    }))
   }, [listTrendingTokens])
 
   return (
